@@ -12,3 +12,7 @@ Werkzeug
 Jinja2
 MarkupSafe
 itsdangerous
+# --- Chat ke liye naye packages ---
+flask-socketio
+python-socketio
+eventlet
