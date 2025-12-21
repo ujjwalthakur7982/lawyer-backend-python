@@ -115,18 +115,38 @@ def token_required(f):
 
 # ==================== SOCKET.IO CHAT EVENTS ====================
 
+# ==================== LIVE CHAT LOGIC ====================
 @socketio.on('join_room')
 def handle_join(data):
     room = f"room_{data['room_id']}"
     join_room(room)
-    print(f"✅ User joined {room}")
 
 @socketio.on('send_message')
 def handle_send_message(data):
-    # data: {room_id, sender_id, message, timestamp}
     room = f"room_{data['room_id']}"
     emit('receive_message', data, room=room)
 
+@app.route('/api/chat/get_or_create_room', methods=['POST'])
+@token_required
+def get_or_create_room(current_user_id, current_user_role):
+    data = request.get_json()
+    lawyer_id = data.get('lawyerId')
+    connection = pool.connection()
+    try:
+        with connection.cursor() as cursor:
+            # Check room exists
+            cursor.execute("SELECT RoomID FROM ChatRooms WHERE ClientID=%s AND LawyerID=%s", (current_user_id, lawyer_id))
+            room = cursor.fetchone()
+            if not room:
+                # Create new room
+                cursor.execute("INSERT INTO ChatRooms (ClientID, LawyerID) VALUES (%s, %s)", (current_user_id, lawyer_id))
+                connection.commit()
+                room_id = cursor.lastrowid
+            else:
+                room_id = room['RoomID']
+        return jsonify({"success": True, "room_id": room_id})
+    finally:
+        connection.close()
 # ==================== CHAT API ROUTES ====================
 
 @app.route('/api/chat/rooms', methods=['GET'])
@@ -191,6 +211,8 @@ def save_chat_message(current_user_id, current_user_role):
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         if connection: connection.close()
+        
+          
 
 # ==================== USER & AUTH ROUTES ====================
 
