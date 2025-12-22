@@ -123,9 +123,36 @@ def handle_join(data):
 
 @socketio.on('send_message')
 def handle_send_message(data):
-    room = f"room_{data['room_id']}"
-    emit('receive_message', data, room=room)
+    room_id = data.get('room_id')
+    sender_id = data.get('sender_id')
+    message_text = data.get('message')
+    room = f"room_{room_id}"
 
+    # ✅ DATABASE MEIN SAVE KARO (Zaroori hai!)
+    connection = None
+    try:
+        connection = pool.connection()
+        with connection.cursor() as cursor:
+            # 1. Message table mein insert karo
+            cursor.execute(
+                "INSERT INTO Messages (RoomID, SenderID, MessageText) VALUES (%s, %s, %s)", 
+                (room_id, sender_id, message_text)
+            )
+            # 2. ChatRooms table mein Last Message update karo
+            cursor.execute(
+                "UPDATE ChatRooms SET LastMessage = %s, LastMessageTime = NOW() WHERE RoomID = %s", 
+                (message_text, room_id)
+            )
+        connection.commit()
+        
+        # ✅ Save hone ke baad hi sabko bhejo
+        emit('receive_message', data, room=room)
+        
+    except Exception as e:
+        print(f"Error saving socket message: {e}")
+        if connection: connection.rollback()
+    finally:
+        if connection: connection.close()
 @app.route('/api/chat/get_or_create_room', methods=['POST'])
 @token_required
 def get_or_create_room(current_user_id, current_user_role):
