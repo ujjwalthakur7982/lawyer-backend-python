@@ -1,18 +1,9 @@
-Flask
-Flask-Bcrypt
+flask
+flask-bcrypt
 flask-cors
 gunicorn
-PyJWT==2.8.0
-PyMySQL
+pyjwt==2.8.0
+pymysql
 cryptography==41.0.4
 python-dateutil
-DBUtils
-click
-Werkzeug
-Jinja2
-MarkupSafe
-itsdangerous
-# --- Chat ke liye naye packages ---
-flask-socketio
-python-socketio
-eventlet
+dbutils
