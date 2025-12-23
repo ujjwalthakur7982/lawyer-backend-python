@@ -128,31 +128,32 @@ def handle_send_message(data):
     message_text = data.get('message')
     room = f"room_{room_id}"
 
-    # ✅ DATABASE MEIN SAVE KARO (Zaroori hai!)
     connection = None
     try:
         connection = pool.connection()
         with connection.cursor() as cursor:
-            # 1. Message table mein insert karo
-            cursor.execute(
-                "INSERT INTO Messages (RoomID, SenderID, MessageText) VALUES (%s, %s, %s)", 
-                (room_id, sender_id, message_text)
-            )
-            # 2. ChatRooms table mein Last Message update karo
-            cursor.execute(
-                "UPDATE ChatRooms SET LastMessage = %s, LastMessageTime = NOW() WHERE RoomID = %s", 
-                (message_text, room_id)
-            )
-        connection.commit()
-        
-        # ✅ Save hone ke baad hi sabko bhejo
+            # 1. Messages table mein save karo
+            sql_msg = "INSERT INTO Messages (RoomID, SenderID, MessageText) VALUES (%s, %s, %s)"
+            cursor.execute(sql_msg, (room_id, sender_id, message_text))
+            
+            # 2. ChatRooms table mein last message update karo
+            sql_room = "UPDATE ChatRooms SET LastMessage = %s, LastMessageTime = NOW() WHERE RoomID = %s"
+            cursor.execute(sql_room, (message_text, room_id))
+            
+            # 3. Commit karna bahut zaroori hai refresh fix karne ke liye
+            connection.commit()
+            print(f"✅ Success: Message saved for room {room_id}")
+
+        # ✅ Database mein save hone ke baad hi sabko bhejo
         emit('receive_message', data, room=room)
-        
+
     except Exception as e:
-        print(f"Error saving socket message: {e}")
-        if connection: connection.rollback()
+        print(f"❌ DATABASE ERROR: {str(e)}")
+        if connection:
+            connection.rollback()
     finally:
-        if connection: connection.close()
+        if connection:
+            connection.close()
 @app.route('/api/chat/get_or_create_room', methods=['POST'])
 @token_required
 def get_or_create_room(current_user_id, current_user_role):
