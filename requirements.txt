@@ -1,9 +1,34 @@
-flask
-flask-bcrypt
-flask-cors
-gunicorn
-pyjwt==2.8.0
-pymysql
-cryptography==41.0.4
-python-dateutil
-dbutils
+altgraph @ file:///AppleInternal/Library/BuildRoots/39d9dc1a-2111-11f0-be06-226177e5bb69/Library/Caches/com.apple.xbs/Sources/python3/altgraph-0.17.2-py2.py3-none-any.whl
+bcrypt==5.0.0
+bidict==0.23.1
+blinker==1.9.0
+cffi==2.0.0
+click==8.1.8
+cryptography==46.0.3
+dnspython==2.7.0
+eventlet==0.40.4
+Flask==3.1.2
+Flask-Bcrypt==1.0.1
+flask-cors==6.0.1
+Flask-SocketIO==5.5.1
+future @ file:///AppleInternal/Library/BuildRoots/39d9dc1a-2111-11f0-be06-226177e5bb69/Library/Caches/com.apple.xbs/Sources/python3/future-0.18.2-py3-none-any.whl
+greenlet==3.2.4
+gunicorn==23.0.0
+h11==0.16.0
+importlib_metadata==8.7.0
+itsdangerous==2.2.0
+Jinja2==3.1.6
+macholib @ file:///AppleInternal/Library/BuildRoots/39d9dc1a-2111-11f0-be06-226177e5bb69/Library/Caches/com.apple.xbs/Sources/python3/macholib-1.15.2-py2.py3-none-any.whl
+MarkupSafe==3.0.3
+packaging==25.0
+pycparser==2.23
+PyJWT==2.10.1
+PyMySQL==1.1.2
+python-engineio==4.12.3
+python-socketio==5.15.1
+simple-websocket==1.1.0
+six @ file:///AppleInternal/Library/BuildRoots/39d9dc1a-2111-11f0-be06-226177e5bb69/Library/Caches/com.apple.xbs/Sources/python3/six-1.15.0-py2.py3-none-any.whl
+typing_extensions==4.15.0
+Werkzeug==3.1.4
+wsproto==1.2.0
+zipp==3.23.0
