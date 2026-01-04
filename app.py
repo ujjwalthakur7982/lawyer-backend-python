@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_bcrypt import Bcrypt
 from flask_cors import CORS
-
+from flask_socketio import SocketIO, emit, join_room
 import pymysql.cursors
 import sys
 import os
@@ -30,9 +30,9 @@ class CustomJSONEncoder(json.JSONEncoder):
 app = Flask(__name__)
 app.json_encoder = CustomJSONEncoder
 bcrypt = Bcrypt(app)
-
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 # Socket.io Initialize (Isse real-time chat chalegi)
-socketio = SocketIO(app, cors_allowed_origins="*")
+#socketio = SocketIO(app, cors_allowed_origins="*")
 
 # Final CORS Fix
 CORS(app, resources={
@@ -118,8 +118,10 @@ def token_required(f):
 # ==================== LIVE CHAT LOGIC ====================
 @socketio.on('join_room')
 def handle_join(data):
+    # Room ID frontend se aayegi (e.g., room_5)
     room = f"room_{data['room_id']}"
     join_room(room)
+    print(f"👤 User joined room: {room}")
 
 @socketio.on('send_message')
 def handle_send_message(data):
@@ -132,28 +134,29 @@ def handle_send_message(data):
     try:
         connection = pool.connection()
         with connection.cursor() as cursor:
-            # 1. Messages table mein save karo
+            # 1. Messages table mein save
             sql_msg = "INSERT INTO Messages (RoomID, SenderID, MessageText) VALUES (%s, %s, %s)"
             cursor.execute(sql_msg, (room_id, sender_id, message_text))
             
-            # 2. ChatRooms table mein last message update karo
+            # 2. Last message update
             sql_room = "UPDATE ChatRooms SET LastMessage = %s, LastMessageTime = NOW() WHERE RoomID = %s"
             cursor.execute(sql_room, (message_text, room_id))
             
-            # 3. Commit karna bahut zaroori hai refresh fix karne ke liye
             connection.commit()
-            print(f"✅ Success: Message saved for room {room_id}")
-
-        # ✅ Database mein save hone ke baad hi sabko bhejo
-        emit('receive_message', data, room=room)
+            
+            # ✅ Sabko message bhejo jo is room mein hain
+            # Isme 'sender_id' aur 'message' dono bhej rahe hain
+            emit('receive_message', {
+                'sender_id': sender_id,
+                'message': message_text,
+                'room_id': room_id
+            }, room=room)
 
     except Exception as e:
-        print(f"❌ DATABASE ERROR: {str(e)}")
-        if connection:
-            connection.rollback()
+        print(f"❌ DB ERROR: {str(e)}")
+        if connection: connection.rollback()
     finally:
-        if connection:
-            connection.close()
+        if connection: connection.close()
 @app.route('/api/chat/get_or_create_room', methods=['POST'])
 @token_required
 def get_or_create_room(current_user_id, current_user_role):
@@ -633,5 +636,4 @@ def get_dashboard_stats(current_user_id, current_user_role):
 
 # --- RUN THE APP ---
 if __name__ == '__main__':
-    # Real-time ke liye ab socketio.run use karenge
-    socketio.run(app, debug=True, port=5001)
+    socketio.run(app, debug=True, port=5001) # Isse socket aur server dono chalenge
